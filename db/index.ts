@@ -15,7 +15,12 @@ function init(): PostgresJsDatabase<typeof schema> {
   }
   // Supabase's transaction pooler does not support prepared statements,
   // so disable them. `max: 1` keeps us well under the free-tier cap.
-  const client = postgres(connectionString, { prepare: false, max: 1 });
+  // `ssl: "require"` because Supabase requires TLS (encrypted, no CA check).
+  const client = postgres(connectionString, {
+    prepare: false,
+    max: 1,
+    ssl: "require",
+  });
   return drizzle(client, { schema });
 }
 
