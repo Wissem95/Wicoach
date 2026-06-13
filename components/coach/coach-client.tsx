@@ -95,7 +95,7 @@ export function CoachClient({ initial }: { initial: ChatMessageView[] }) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] flex-col">
+    <div className="flex h-[calc(100dvh-15rem)] flex-col md:h-[calc(100dvh-11rem)]">
       <div className="flex-1 space-y-3 overflow-y-auto pb-4">
         {messages.length === 0 && (
           <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">

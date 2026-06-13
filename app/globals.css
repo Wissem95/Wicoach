@@ -4,24 +4,29 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 160 30% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    --primary: 142 71% 45%;
+    --primary: 158 64% 39%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
+    --secondary: 160 24% 94%;
+    --secondary-foreground: 222 30% 20%;
+    --muted: 160 20% 95%;
     --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 158 50% 93%;
+    --accent-foreground: 158 64% 25%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 142 71% 45%;
-    --radius: 0.75rem;
+    --border: 214 25% 90%;
+    --input: 214 25% 88%;
+    --ring: 158 64% 39%;
+    --radius: 1rem;
+
+    /* extra design tokens */
+    --protein: 211 92% 52%;
+    --carbs: 32 95% 52%;
+    --fats: 270 70% 60%;
   }
 }
 
@@ -30,16 +35,43 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     -webkit-tap-highlight-color: transparent;
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(60rem 60rem at 110% -10%, hsl(158 64% 39% / 0.08), transparent 55%),
+      radial-gradient(50rem 50rem at -10% 0%, hsl(211 92% 52% / 0.06), transparent 50%);
+    background-attachment: fixed;
   }
 }
 
-/* Larger tap targets / no zoom-on-focus on iOS */
+/* No zoom-on-focus on iOS */
 @layer base {
   input,
   select,
   textarea {
     font-size: 16px;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-br from-primary to-emerald-500 bg-clip-text text-transparent;
+  }
+  .card-glass {
+    background: hsl(0 0% 100% / 0.85);
+    backdrop-filter: blur(12px);
+  }
+  .shadow-soft {
+    box-shadow:
+      0 1px 2px hsl(222 47% 11% / 0.04),
+      0 8px 24px -12px hsl(222 47% 11% / 0.12);
+  }
+  /* hide scrollbars on the horizontal nav */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }

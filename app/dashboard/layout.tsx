@@ -10,9 +10,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect("/login");
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-16">
+    <div className="min-h-screen">
       <DashboardNav />
-      <main className="container max-w-3xl py-4">{children}</main>
+      {/* Extra bottom padding so content clears the mobile tab bar */}
+      <main className="container max-w-3xl py-5 pb-28 md:pb-10">{children}</main>
     </div>
   );
 }

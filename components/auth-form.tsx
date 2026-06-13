@@ -49,7 +49,13 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
+      <div className="text-center">
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          <span className="text-gradient">Wi</span>coach
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">Ton coach fitness & nutrition perso</p>
+      </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">{isSignup ? "Créer un compte" : "Connexion"}</CardTitle>
