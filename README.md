@@ -116,6 +116,30 @@ requête DB qui réinitialise le compteur d'inactivité. Aucune config requise
 (le cron est actif dès le déploiement sur Vercel). Option : définis `CRON_SECRET`
 pour que seul le cron Vercel puisse appeler la route.
 
+## Migration 0001 — mémoire coach, sommeil, Apple Santé, rappels
+
+Après `0000_init.sql`, exécute **`db/migrations/0001_features.sql`** dans le SQL Editor.
+Ça ajoute : la mémoire permanente du coach, le sommeil, l'ingestion Apple Santé
+(token), et les abonnements push.
+
+### Rappels par email (gratuit)
+1. Crée un compte sur https://resend.com → **API Keys** → copie la clé.
+2. Variables Vercel : `RESEND_API_KEY` (et `REMINDER_FROM` optionnel).
+   Sans domaine vérifié, Resend n'envoie que vers l'email de ton compte Resend.
+3. Un **Vercel Cron** quotidien (`/api/cron/reminders`, 19:00 UTC) envoie le récap.
+
+### Notifications iPhone (Web Push, gratuit)
+1. Génère une paire VAPID : `npx web-push generate-vapid-keys`.
+2. Variables Vercel : `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
+3. Sur iPhone : ouvre l'app dans Safari → **Partager → « Sur l'écran d'accueil »**,
+   rouvre depuis l'icône, puis **Réglages → Activer les notifications iPhone**.
+
+### Apple Santé (pas / poids / sommeil) via Raccourci
+Pas d'accès direct depuis le web. Va dans **Réglages**, copie ton **URL d'ingestion**
+(avec ton token secret), et crée un **Raccourci iPhone** (automatisation quotidienne)
+qui lit Santé et fait un POST JSON `{ "steps":…, "weight":…, "sleep_hours":… }`.
+Saisie manuelle aussi possible depuis Réglages.
+
 ## Notes
 
 - L'analyse photo est une **estimation (±20-30 %)**, affichée et éditable avant save.

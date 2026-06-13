@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PushToggle } from "@/components/settings/push-toggle";
 
 export interface SettingsProfile {
   currentWeight: number;
@@ -186,11 +187,12 @@ export function SettingsClient({
               aria-label="Activer les rappels par email"
             />
           </label>
-          <p className="rounded-md bg-muted p-2.5 text-xs text-muted-foreground">
-            <Smartphone className="mr-1 inline h-3.5 w-3.5" />
-            Notifications iPhone (push) : ajoute d&apos;abord l&apos;app à ton écran d&apos;accueil
-            (Safari → Partager → « Sur l&apos;écran d&apos;accueil »), l&apos;activation arrive juste après.
-          </p>
+          <div className="space-y-2">
+            <p className="flex items-center gap-1.5 text-sm font-medium">
+              <Smartphone className="h-3.5 w-3.5" /> Notifications iPhone (push)
+            </p>
+            <PushToggle />
+          </div>
         </CardContent>
       </Card>
 
