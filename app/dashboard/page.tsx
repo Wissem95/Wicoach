@@ -7,9 +7,10 @@ import {
   getTodayMeals,
   getTodayPlannedWorkout,
   getWeekTrend,
+  getRecentWorkoutLogs,
 } from "@/db/queries";
 import { requireUserId } from "@/lib/supabase/server";
-import { clamp } from "@/lib/utils";
+import { clamp, todayISO } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +22,14 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const userId = await requireUserId();
-  const [profile, logs, totals, meals, todayWorkout, weekTrend] = await Promise.all([
+  const [profile, logs, totals, meals, todayWorkout, weekTrend, recentWorkouts] = await Promise.all([
     getProfile(userId),
     getWeightLogs(userId, 90),
     getTodayTotals(userId),
     getTodayMeals(userId),
     getTodayPlannedWorkout(userId),
     getWeekTrend(userId),
+    getRecentWorkoutLogs(userId, 30),
   ]);
 
   const current = logs[0]?.weight ?? profile.currentWeight;
@@ -36,6 +38,11 @@ export default async function DashboardPage() {
   // Progress from starting weight towards the goal.
   const goalSpan = start - profile.targetWeight;
   const goalPct = goalSpan > 0 ? clamp(Math.round(((start - current) / goalSpan) * 100), 0, 100) : 0;
+
+  // Weekly workout recap (last 7 days, completed sessions only).
+  const weekAgo = todayISO(new Date(Date.now() - 6 * 86400000));
+  const weekWorkouts = recentWorkouts.filter((w) => w.performedAt >= weekAgo && w.completed);
+  const weekMinutes = weekWorkouts.reduce((a, w) => a + w.durationMinutes, 0);
 
   return (
     <div className="space-y-4">
@@ -79,6 +86,37 @@ export default async function DashboardPage() {
             <RingStat label="Gluc." value={totals.carbs} target={profile.targetCarbs} color="hsl(var(--carbs))" warnOver />
             <RingStat label="Lip." value={totals.fats} target={profile.targetFats} color="hsl(var(--fats))" />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Weekly recap */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-semibold">Cette semaine</h2>
+            <Badge variant="secondary">
+              {weekWorkouts.length} séance{weekWorkouts.length > 1 ? "s" : ""} · {weekMinutes} min
+            </Badge>
+          </div>
+          {weekWorkouts.length === 0 ? (
+            <p className="py-3 text-center text-sm text-muted-foreground">
+              Aucune séance loggée cette semaine. On s&apos;y met ? 💪
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {weekWorkouts.map((w) => (
+                <span
+                  key={w.id}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs"
+                >
+                  <Dumbbell className="h-3 w-3 text-primary" />
+                  <span className="font-medium">{TRAINING_TYPE_LABELS[w.type as TrainingType]}</span>
+                  {w.focus && <span className="text-muted-foreground">· {w.focus}</span>}
+                  <span className="text-muted-foreground">· {w.durationMinutes}min</span>
+                </span>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
