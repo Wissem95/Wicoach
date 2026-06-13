@@ -107,6 +107,15 @@ lib/
 types/                    Types partagés
 ```
 
+## Garder Supabase actif (free tier)
+
+Le projet Supabase free **se met en pause après 7 jours sans aucune requête**
+(données **conservées**, restauration en 1 clic). Pour ne jamais y penser, un
+**Vercel Cron** (`vercel.json`) appelle `/api/health` chaque jour → une mini
+requête DB qui réinitialise le compteur d'inactivité. Aucune config requise
+(le cron est actif dès le déploiement sur Vercel). Option : définis `CRON_SECRET`
+pour que seul le cron Vercel puisse appeler la route.
+
 ## Notes
 
 - L'analyse photo est une **estimation (±20-30 %)**, affichée et éditable avant save.
