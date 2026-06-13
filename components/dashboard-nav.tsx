@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Scale, Utensils, ShoppingBasket, Dumbbell, MessageCircle, LogOut } from "lucide-react";
+import { Home, Scale, Utensils, ShoppingBasket, Dumbbell, MessageCircle, LogOut, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -60,9 +60,16 @@ export function DashboardNav() {
             })}
           </nav>
 
-          <Button variant="ghost" size="icon" onClick={logout} aria-label="Se déconnecter">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-0.5">
+            <Button asChild variant="ghost" size="icon" aria-label="Réglages">
+              <Link href="/dashboard/settings">
+                <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={logout} aria-label="Se déconnecter">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 

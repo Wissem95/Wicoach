@@ -16,6 +16,9 @@ const schema = z.object({
   target_protein: z.number().int().min(0).max(500).optional(),
   target_carbs: z.number().int().min(0).max(500).optional(),
   target_fats: z.number().int().min(0).max(500).optional(),
+  coach_notes: z.string().max(20000).nullish(),
+  email_reminders: z.boolean().optional(),
+  push_enabled: z.boolean().optional(),
 });
 
 export const PUT = withAuth(async (userId, req) => {
@@ -32,6 +35,9 @@ export const PUT = withAuth(async (userId, req) => {
       ...(d.target_protein !== undefined && { targetProtein: d.target_protein }),
       ...(d.target_carbs !== undefined && { targetCarbs: d.target_carbs }),
       ...(d.target_fats !== undefined && { targetFats: d.target_fats }),
+      ...(d.coach_notes !== undefined && { coachNotes: d.coach_notes }),
+      ...(d.email_reminders !== undefined && { emailReminders: d.email_reminders }),
+      ...(d.push_enabled !== undefined && { pushEnabled: d.push_enabled }),
       updatedAt: new Date(),
     })
     .where(eq(profiles.id, userId))

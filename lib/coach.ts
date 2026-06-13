@@ -6,6 +6,8 @@ import {
   getPantry,
   getTrainingPlan,
   getTodayPlannedWorkout,
+  getLatestSleep,
+  getTodaySteps,
 } from "@/db/queries";
 import { buildCoachSystemPrompt, type CoachContext } from "@/lib/llm/prompts";
 import { DAY_LABELS, MEAL_TYPE_LABELS, TRAINING_TYPE_LABELS } from "@/types";
@@ -13,7 +15,7 @@ import type { MealType, TrainingType } from "@/types";
 
 /** Gathers fresh user data and builds the coach system prompt. */
 export async function buildCoachContextPrompt(userId: string): Promise<string> {
-  const [profile, totals, meals, weekTrend, pantry, plan, todayPlan] =
+  const [profile, totals, meals, weekTrend, pantry, plan, todayPlan, sleep, steps] =
     await Promise.all([
       getProfile(userId),
       getTodayTotals(userId),
@@ -22,6 +24,8 @@ export async function buildCoachContextPrompt(userId: string): Promise<string> {
       getPantry(userId),
       getTrainingPlan(userId),
       getTodayPlannedWorkout(userId),
+      getLatestSleep(userId),
+      getTodaySteps(userId),
     ]);
 
   const todayMealsSummary =
@@ -54,6 +58,11 @@ export async function buildCoachContextPrompt(userId: string): Promise<string> {
     ? `${TRAINING_TYPE_LABELS[todayPlan.type as TrainingType]}${todayPlan.focus ? ` (${todayPlan.focus})` : ""}`
     : "repos / non défini";
 
+  const sleepSummary = sleep
+    ? `${sleep.hours}h la nuit du ${sleep.loggedAt}${sleep.hours < 7 ? " (insuffisant, < 7h)" : ""}`
+    : "non renseigné";
+  const stepsSummary = steps ? `${steps.steps} pas aujourd'hui` : "pas renseignés aujourd'hui";
+
   const ctx: CoachContext = {
     currentWeight: profile.currentWeight,
     targetWeight: profile.targetWeight,
@@ -66,6 +75,9 @@ export async function buildCoachContextPrompt(userId: string): Promise<string> {
     pantryItems,
     weeklyTrainingPlan,
     todayWorkout,
+    coachNotes: profile.coachNotes,
+    sleepSummary,
+    stepsSummary,
   };
 
   return buildCoachSystemPrompt(ctx);

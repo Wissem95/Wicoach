@@ -47,6 +47,12 @@ export const profiles = pgTable("profiles", {
   targetProtein: integer("target_protein").notNull().default(110),
   targetCarbs: integer("target_carbs").notNull().default(80),
   targetFats: integer("target_fats").notNull().default(50),
+  // Permanent "everything about me" memory injected into the coach prompt.
+  coachNotes: text("coach_notes"),
+  // Secret token used by the Apple Health Shortcut to push data in.
+  ingestToken: uuid("ingest_token").notNull().defaultRandom(),
+  emailReminders: boolean("email_reminders").notNull().default(true),
+  pushEnabled: boolean("push_enabled").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -226,6 +232,40 @@ export const stepsLogs = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// sleep_logs — one night per day per user (from Apple Health or manual)
+// ---------------------------------------------------------------------------
+export const sleepLogs = pgTable(
+  "sleep_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    hours: real("hours").notNull(),
+    loggedAt: date("logged_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("sleep_logs_user_day_uq").on(t.userId, t.loggedAt),
+    check("sleep_logs_range", sql`${t.hours} >= 0 AND ${t.hours} <= 24`),
+    check("sleep_logs_not_future", sql`${t.loggedAt} <= CURRENT_DATE`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// push_subscriptions — Web Push endpoints (PWA on iOS)
+// ---------------------------------------------------------------------------
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("push_subscriptions_user_idx").on(t.userId)],
+);
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 export type Profile = typeof profiles.$inferSelect;
@@ -238,3 +278,5 @@ export type PantryItem = typeof pantryItems.$inferSelect;
 export type TrainingPlanRow = typeof trainingPlan.$inferSelect;
 export type WorkoutLog = typeof workoutLogs.$inferSelect;
 export type StepsLog = typeof stepsLogs.$inferSelect;
+export type SleepLog = typeof sleepLogs.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;

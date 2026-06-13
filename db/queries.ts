@@ -10,6 +10,8 @@ import {
   pantryItems,
   trainingPlan,
   workoutLogs,
+  sleepLogs,
+  stepsLogs,
 } from "./schema";
 import { todayISO } from "@/lib/utils";
 import type { MacroTotals } from "@/types";
@@ -134,6 +136,26 @@ export async function getRecentWorkoutLogs(userId: string, limit = 14) {
     .where(eq(workoutLogs.userId, userId))
     .orderBy(desc(workoutLogs.performedAt))
     .limit(limit);
+}
+
+// ---- Sleep & steps -------------------------------------------------------
+export async function getLatestSleep(userId: string) {
+  const [row] = await db
+    .select()
+    .from(sleepLogs)
+    .where(eq(sleepLogs.userId, userId))
+    .orderBy(desc(sleepLogs.loggedAt))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function getTodaySteps(userId: string) {
+  const [row] = await db
+    .select()
+    .from(stepsLogs)
+    .where(and(eq(stepsLogs.userId, userId), eq(stepsLogs.loggedAt, todayISO())))
+    .limit(1);
+  return row ?? null;
 }
 
 // ---- Chat ----------------------------------------------------------------
