@@ -5,6 +5,7 @@ import { getChatHistory, countTodayUserMessages } from "@/db/queries";
 import { withAuth, badRequest, ok } from "@/lib/api";
 import { getLLM } from "@/lib/llm";
 import { buildCoachContextPrompt } from "@/lib/coach";
+import { coachToolDeclarations, executeCoachTool } from "@/lib/coach-actions";
 import type { ChatTurn } from "@/lib/llm/types";
 
 export const maxDuration = 60;
@@ -43,20 +44,28 @@ export const POST = withAuth(async (userId, req) => {
   }));
 
   const encoder = new TextEncoder();
-  let full = "";
 
   const stream = new ReadableStream({
     async start(controller) {
+      let full = "";
       try {
-        for await (const chunk of getLLM().chat({ system, messages: turns })) {
-          full += chunk;
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk })}\n\n`));
+        // Agentic: the coach may call tools (modify plan, remember, etc.)
+        // before producing its final answer.
+        full = await getLLM().runCoach({
+          system,
+          messages: turns,
+          tools: coachToolDeclarations,
+          onToolCall: (name, args) => executeCoachTool(userId, name, args),
+        });
+        // Stream the final answer word-by-word for a live feel.
+        const words = full.split(/(\s+)/);
+        for (const w of words) {
+          if (w) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: w })}\n\n`));
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Erreur LLM";
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`));
       } finally {
-        // Save the assistant reply (fire-and-forget; the response is already streamed).
         if (full.trim()) {
           await db
             .insert(chatMessages)

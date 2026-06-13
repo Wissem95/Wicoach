@@ -63,6 +63,16 @@ export async function buildCoachContextPrompt(userId: string): Promise<string> {
     : "non renseigné";
   const stepsSummary = steps ? `${steps.steps} pas aujourd'hui` : "pas renseignés aujourd'hui";
 
+  const now = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Paris",
+  }).format(new Date());
+
   const ctx: CoachContext = {
     currentWeight: profile.currentWeight,
     targetWeight: profile.targetWeight,
@@ -78,6 +88,7 @@ export async function buildCoachContextPrompt(userId: string): Promise<string> {
     coachNotes: profile.coachNotes,
     sleepSummary,
     stepsSummary,
+    now,
   };
 
   return buildCoachSystemPrompt(ctx);
