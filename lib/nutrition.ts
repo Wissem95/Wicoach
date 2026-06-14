@@ -105,3 +105,28 @@ export const MORPH_LABELS: Record<Morph, string> = {
   meso: "Corps plutôt équilibré",
   ecto: "Je reste mince / prends difficilement",
 };
+
+/**
+ * Body-fat % estimate — US Navy method (metric, cm).
+ * Men need neck + waist; women need neck + waist + hip. Returns null if missing.
+ */
+export function bodyFatNavy(
+  sex: Sex,
+  heightCm: number,
+  neckCm: number,
+  waistCm: number,
+  hipCm?: number,
+): number | null {
+  if (!heightCm || !neckCm || !waistCm) return null;
+  let bf: number;
+  if (sex === "homme") {
+    if (waistCm - neckCm <= 0) return null;
+    bf = 495 / (1.0324 - 0.19077 * Math.log10(waistCm - neckCm) + 0.15456 * Math.log10(heightCm)) - 450;
+  } else {
+    if (!hipCm || waistCm + hipCm - neckCm <= 0) return null;
+    bf = 495 / (1.29579 - 0.35004 * Math.log10(waistCm + hipCm - neckCm) + 0.221 * Math.log10(heightCm)) - 450;
+  }
+  if (!Number.isFinite(bf)) return null;
+  return Math.round(Math.min(60, Math.max(3, bf)) * 10) / 10;
+}
+

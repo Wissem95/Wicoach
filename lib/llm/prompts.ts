@@ -12,6 +12,17 @@ export const PHOTO_ANALYSIS_PROMPT = `Tu es un nutritionniste. Analyse cette pho
 }
 Règles : portions réalistes ; compte les huiles/sauces même non évidentes ; si la photo est floue ou le plat ambigu, baisse confidence et explique dans notes ; détecte tous les items visibles. Réponds en français.`;
 
+export function buildProgramGenerationPrompt(now: string): string {
+  return `Tu es le coach nutrition/fitness. Nous sommes : ${now}. À partir du PROFIL fourni par l'utilisateur, génère MAINTENANT son programme complet, SANS poser de question, en appelant directement tes outils :
+
+- save_favorite_meal : crée 8 à 12 favoris = 2 ou 3 MENUS DE JOURNÉE complets (un favori par repas : petit-déj, déjeuner, collation, dîner de chaque journée type). Respecte STRICTEMENT les allergies, le régime (halal/végé/végan/sans lactose) et le diabète (index glycémique bas, glucides maîtrisés si diabétique). Vise les cibles caloriques/macros indiquées. Mets des macros estimées cohérentes sur chaque aliment.
+- update_training_day : pour CHAQUE jour d'entraînement indiqué, détaille une vraie séance (exercices + séries × reps + repos) adaptée AU LIEU et AU MATÉRIEL : si abonnement salle → exercices machines/charges ; sinon maison avec UNIQUEMENT le matériel listé (ou au poids du corps si aucun). Adapte au niveau et à l'objectif. Mets tout le détail dans le champ "focus".
+- add_pantry_item : ajoute les ingrédients de base des menus au garde-manger.
+- remember : enregistre une synthèse du programme (menus + séances) et le profil complet en mémoire pour pouvoir l'adapter ensuite.
+
+N'appelle PAS complete_onboarding (déjà fait). Quand tout est créé, termine par un récap motivant de 3-4 lignes en français (cite les cibles et le nombre de menus/séances créés).`;
+}
+
 export function buildOnboardingSystemPrompt(now: string): string {
   return `Tu es le coach onboarding de Wicoach. Nous sommes : ${now}. Objectif : via une courte conversation chaleureuse en français, comprendre l'utilisateur PUIS configurer toute son app avec tes outils.
 

@@ -8,6 +8,7 @@ import { apiSend } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
 import {
   computeTargets,
+  bodyFatNavy,
   GOAL_LABELS,
   ACTIVITY_LABELS,
   MORPH_LABELS,
@@ -23,10 +24,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const STEPS = ["Toi", "Mesures", "Objectif", "Activité", "Corps & santé", "Cibles", "Entraînement"];
+const STEPS = ["Toi", "Mesures", "Objectif", "Activité", "Corps & santé", "Lieu & matériel", "Cibles", "Entraînement"];
 const DAYS = [
   { v: 1, l: "Lun" }, { v: 2, l: "Mar" }, { v: 3, l: "Mer" }, { v: 4, l: "Jeu" },
   { v: 5, l: "Ven" }, { v: 6, l: "Sam" }, { v: 0, l: "Dim" },
+];
+const EQUIPMENT = [
+  { v: "halteres", l: "Haltères" },
+  { v: "elastiques", l: "Élastiques" },
+  { v: "barre", l: "Barre & poids" },
+  { v: "kettlebell", l: "Kettlebell" },
+  { v: "banc", l: "Banc" },
+  { v: "tractions", l: "Barre de traction" },
+  { v: "tapis", l: "Tapis de course" },
+  { v: "velo", l: "Vélo d'appart" },
+  { v: "aucun", l: "Aucun (poids du corps)" },
 ];
 const ACTIVITY_DESC: Record<Activity, string> = {
   sedentaire: "Bureau, peu de marche",
@@ -83,6 +95,15 @@ export function OnboardingWizard() {
   const [days, setDays] = React.useState<Set<number>>(new Set([1, 3, 5]));
   const [ttype, setTtype] = React.useState<TrainingType>("maison");
 
+  const [gym, setGym] = React.useState(false);
+  const [equipment, setEquipment] = React.useState<Set<string>>(new Set(["aucun"]));
+  const [neck, setNeck] = React.useState("");
+  const [waist, setWaist] = React.useState("");
+  const [hip, setHip] = React.useState("");
+  const [likes, setLikes] = React.useState("");
+  const [dislikes, setDislikes] = React.useState("");
+  const [phase, setPhase] = React.useState<"form" | "generating">("form");
+
   const nums = {
     age: parseInt(age, 10),
     height: parseFloat(height.replace(",", ".")),
@@ -104,9 +125,15 @@ export function OnboardingWizard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sex, age, height, current, target, goal, activity, morph, diabetic]);
 
+  const bodyFat = React.useMemo(() => {
+    if (!sex || !measuresValid) return null;
+    return bodyFatNavy(sex, nums.height, parseFloat(neck.replace(",", ".")), parseFloat(waist.replace(",", ".")), parseFloat(hip.replace(",", ".")));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sex, height, neck, waist, hip, measuresValid]);
+
   // Seed editable targets when arriving on the calc step.
   React.useEffect(() => {
-    if (step === 5 && computed && !targets) {
+    if (step === 6 && computed && !targets) {
       setTargets({
         calories: String(computed.calories),
         protein: String(computed.protein),
@@ -125,27 +152,35 @@ export function OnboardingWizard() {
 
   function buildNotes(): string {
     const diets = [...diet].map((d) => DIETS.find((x) => x.v === d)?.l ?? d);
+    const equip = [...equipment].map((e) => EQUIPMENT.find((x) => x.v === e)?.l ?? e);
     const conditions = [
       diabetic && "diabétique",
       hypertension && "hypertension",
       cholesterol && "cholestérol",
     ].filter(Boolean);
     const c = computed;
+    const dayNames = [...days].map((d) => DAYS.find((x) => x.v === d)?.l ?? d);
     return [
       `Profil (onboarding) : ${sex}, ${nums.age} ans, ${nums.height} cm, ${nums.current} → ${nums.target} kg.`,
+      bodyFat ? `Masse grasse estimée (US Navy) : ${bodyFat}%.` : "",
       `Objectif : ${GOAL_LABELS[goal]}. Activité : ${ACTIVITY_LABELS[activity]}. Morphologie : ${MORPH_LABELS[morph]}.`,
       conditions.length ? `Santé : ${conditions.join(", ")}.` : "",
       healthOther.trim() ? `Autres infos santé : ${healthOther.trim()}.` : "",
       diets.length ? `Alimentation : ${diets.join(", ")}.` : "",
-      allergies.trim() ? `Allergies/intolérances : ${allergies.trim()}.` : "",
-      c ? `Calculs : BMR ${c.bmr} kcal, TDEE ${c.tdee} kcal → cible ${targets?.calories} kcal (${targets?.protein}P/${targets?.carbs}G/${targets?.fats}L).` : "",
-      diabetic ? "IMPORTANT diabète : privilégier index glycémique bas, glucides répartis sur la journée, surveiller la glycémie ; adapter les suggestions de repas en conséquence." : "",
+      allergies.trim() ? `Allergies/intolérances (À ÉVITER ABSOLUMENT) : ${allergies.trim()}.` : "",
+      likes.trim() ? `Aliments aimés : ${likes.trim()}.` : "",
+      dislikes.trim() ? `Aliments détestés : ${dislikes.trim()}.` : "",
+      gym ? "Accès SALLE de sport (abonnement)." : `Entraînement à la MAISON, matériel dispo : ${equip.join(", ") || "aucun (poids du corps)"}.`,
+      `Jours d'entraînement : ${dayNames.join(", ") || "à définir"} (type principal : ${ttype}).`,
+      c ? `Cibles : BMR ${c.bmr} kcal, TDEE ${c.tdee} kcal → ${targets?.calories} kcal/jour, ${targets?.protein}g protéines, ${targets?.carbs}g glucides, ${targets?.fats}g lipides.` : "",
+      diabetic ? "IMPORTANT diabète : index glycémique bas, glucides maîtrisés et répartis ; adapter les menus en conséquence." : "",
     ].filter(Boolean).join(" ");
   }
 
   async function finish() {
     if (!sex || !measuresValid || !targets) return toast.error("Complète les étapes.");
     setLoading(true);
+    const summary = buildNotes();
     try {
       const chosen = [...days];
       const training = [0, 1, 2, 3, 4, 5, 6].map((dow) => ({
@@ -153,6 +188,7 @@ export function OnboardingWizard() {
         type: chosen.includes(dow) ? ttype : ("repos" as TrainingType),
         focus: null as string | null,
       }));
+      // 1) Deterministic config (targets + onboarded + plan skeleton + routine).
       await apiSend("/api/onboarding", "POST", {
         current_weight: nums.current,
         target_weight: nums.target,
@@ -160,17 +196,38 @@ export function OnboardingWizard() {
         target_protein: parseInt(targets.protein, 10),
         target_carbs: parseInt(targets.carbs, 10),
         target_fats: parseInt(targets.fats, 10),
-        notes: buildNotes(),
+        notes: summary,
         training,
         seed_routine: true,
       });
-      toast.success("Programme personnalisé prêt ! 🎉");
+      // 2) Let the coach build the full program (menus + detailed sessions).
+      setPhase("generating");
+      await apiSend("/api/onboarding/generate", "POST", { summary }).catch(() => null);
+      toast.success("Ton programme est prêt ! 🎉");
       router.replace("/dashboard");
       router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Échec");
       setLoading(false);
+      setPhase("form");
     }
+  }
+
+  if (phase === "generating") {
+    return (
+      <div className="w-full">
+        <Card className="w-full">
+          <CardContent className="space-y-3 p-8 text-center">
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+            <h2 className="text-xl font-bold">Ton coach construit ton programme…</h2>
+            <p className="text-sm text-muted-foreground">
+              Menus de journée (allergies & préférences respectées) + séances détaillées adaptées à
+              ton matériel. Quelques secondes ⏳
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -255,15 +312,59 @@ export function OnboardingWizard() {
                 </div>
               </div>
               <Field label="Allergies / intolérances" value={allergies} onChange={setAllergies} placeholder="arachides, gluten…" text />
+              <Field label="Aliments que tu adores" value={likes} onChange={setLikes} placeholder="saumon, avoine, poulet…" text />
+              <Field label="Aliments que tu détestes" value={dislikes} onChange={setDislikes} placeholder="brocoli, foie…" text />
               <Field label="Autre info santé (blessure, traitement…)" value={healthOther} onChange={setHealthOther} placeholder="optionnel" text />
             </div>
           )}
 
           {step === 5 && (
             <div className="space-y-4">
+              <h2 className="text-xl font-bold">Lieu & matériel</h2>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Où t&apos;entraînes-tu ?</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <OptionCard active={gym} onClick={() => setGym(true)} title="Salle de sport" desc="Abonnement / machines" />
+                  <OptionCard active={!gym} onClick={() => setGym(false)} title="À la maison" desc="Avec mon matériel" />
+                </div>
+              </div>
+              {!gym && (
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Matériel disponible</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {EQUIPMENT.map((e) => (
+                      <Toggle
+                        key={e.v}
+                        active={equipment.has(e.v)}
+                        onClick={() => setEquipment((s) => { const n = new Set(s); n.has(e.v) ? n.delete(e.v) : n.add(e.v); return n; })}
+                        label={e.l}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label className="text-sm">Mensurations (optionnel — estime ta masse grasse)</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Field label="Cou (cm)" value={neck} onChange={setNeck} placeholder="38" />
+                  <Field label="Taille (cm)" value={waist} onChange={setWaist} placeholder="90" />
+                  {sex === "femme" && <Field label="Hanches (cm)" value={hip} onChange={setHip} placeholder="95" />}
+                </div>
+                {bodyFat && <p className="text-xs text-muted-foreground">Masse grasse estimée : <b>{bodyFat}%</b></p>}
+              </div>
+            </div>
+          )}
+
+          {step === 6 && (
+            <div className="space-y-4">
               <h2 className="flex items-center gap-2 text-xl font-bold">
                 <Calculator className="h-5 w-5 text-primary" /> Tes cibles calculées
               </h2>
+              {bodyFat && (
+                <div className="rounded-xl bg-accent p-2.5 text-center text-sm">
+                  Masse grasse estimée : <b>{bodyFat}%</b>
+                </div>
+              )}
               {!computed ? (
                 <p className="text-sm text-muted-foreground">Complète tes mesures (étape 2) pour le calcul.</p>
               ) : (
@@ -292,7 +393,7 @@ export function OnboardingWizard() {
             </div>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold">Ton entraînement</h2>
               <div>
