@@ -303,6 +303,41 @@ export const customAlerts = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// routine_items — daily routine template (wake-up, meals, supplements…)
+// ---------------------------------------------------------------------------
+export const routineItems = pgTable(
+  "routine_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    label: text("label").notNull(),
+    atTime: text("at_time"), // "HH:MM" optional
+    sort: integer("sort").notNull().default(0),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("routine_items_user_idx").on(t.userId, t.sort)],
+);
+
+// ---------------------------------------------------------------------------
+// routine_checks — which routine items were ticked, per day
+// ---------------------------------------------------------------------------
+export const routineChecks = pgTable(
+  "routine_checks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    itemId: uuid("item_id").notNull(),
+    day: date("day").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("routine_checks_uq").on(t.userId, t.itemId, t.day),
+    index("routine_checks_user_day_idx").on(t.userId, t.day),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 export type Profile = typeof profiles.$inferSelect;
@@ -319,3 +354,5 @@ export type SleepLog = typeof sleepLogs.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type CustomAlert = typeof customAlerts.$inferSelect;
+export type RoutineItem = typeof routineItems.$inferSelect;
+export type RoutineCheck = typeof routineChecks.$inferSelect;

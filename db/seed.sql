@@ -97,5 +97,19 @@ begin
   (uid,'J4 Refeed Collation — Skyr + banane','snack',$j$[{"food_name":"Banane","portion":120,"unit":"g","calories":107,"protein":1,"carbs":27,"fats":0},{"food_name":"Skyr nature","portion":150,"unit":"g","calories":90,"protein":17,"carbs":6,"fats":0}]$j$::jsonb),
   (uid,'J4 Refeed Dîner — Saumon + patate douce','diner',$j$[{"food_name":"Saumon","portion":180,"unit":"g","calories":337,"protein":36,"carbs":0,"fats":22},{"food_name":"Patate douce cuite","portion":200,"unit":"g","calories":172,"protein":3,"carbs":40,"fats":0},{"food_name":"Légumes verts cuits","portion":150,"unit":"g","calories":45,"protein":3,"carbs":6,"fats":1},{"food_name":"Yaourt grec","portion":150,"unit":"g","calories":145,"protein":13,"carbs":8,"fats":7},{"food_name":"Miel","portion":15,"unit":"g","calories":46,"protein":0,"carbs":12,"fats":0}]$j$::jsonb);
 
+  -- ---- Routine quotidienne (checklist du jour) --------------------------
+  delete from routine_items where user_id = uid;
+  insert into routine_items (user_id, label, at_time, sort) values
+    (uid,'Réveil','07:00',0),
+    (uid,'Compléments matin (multivit, D3, oméga-3)','07:30',1),
+    (uid,'Petit-déjeuner','07:30',2),
+    (uid,'Déjeuner','13:00',3),
+    (uid,'Collation','16:00',4),
+    (uid,'Séance / cardio du jour','17:30',5),
+    (uid,'Dîner','19:30',6),
+    (uid,'Stop manger pour ce soir','20:00',7),
+    (uid,'Magnésium + collagène','22:30',8),
+    (uid,'Au lit (objectif 8h)','23:00',9);
+
   raise notice 'Seed Wissem OK pour %', uid;
 end $$;

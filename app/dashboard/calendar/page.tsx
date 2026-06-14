@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { db } from "@/db";
-import { tasks } from "@/db/schema";
+import { tasks, routineItems, routineChecks } from "@/db/schema";
 import { getTrainingPlan } from "@/db/queries";
 import { requireUserId } from "@/lib/supabase/server";
 import { CalendarClient } from "@/components/calendar/calendar-client";
@@ -18,12 +18,21 @@ export default async function CalendarPage() {
   const from = `${year}-${pad(month + 1)}-01`;
   const to = `${year}-${pad(month + 1)}-${pad(new Date(year, month + 1, 0).getDate())}`;
 
-  const [rows, plan] = await Promise.all([
+  const [taskRows, routine, checks, plan] = await Promise.all([
     db
       .select()
       .from(tasks)
       .where(and(eq(tasks.userId, userId), gte(tasks.dueDate, from), lte(tasks.dueDate, to)))
       .orderBy(asc(tasks.dueDate), asc(tasks.createdAt)),
+    db
+      .select()
+      .from(routineItems)
+      .where(and(eq(routineItems.userId, userId), eq(routineItems.active, true)))
+      .orderBy(asc(routineItems.sort), asc(routineItems.atTime)),
+    db
+      .select({ itemId: routineChecks.itemId, day: routineChecks.day })
+      .from(routineChecks)
+      .where(and(eq(routineChecks.userId, userId), gte(routineChecks.day, from), lte(routineChecks.day, to))),
     getTrainingPlan(userId),
   ]);
 
@@ -31,12 +40,14 @@ export default async function CalendarPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-bold">Calendrier</h1>
       <CalendarClient
-        initialTasks={rows.map((t) => ({
+        initialTasks={taskRows.map((t) => ({
           id: t.id,
           title: t.title,
           status: t.status,
           dueDate: t.dueDate,
         }))}
+        routine={routine.map((r) => ({ id: r.id, label: r.label, atTime: r.atTime }))}
+        initialChecks={checks}
         initialYear={year}
         initialMonth={month}
         plan={plan.map((p) => ({
