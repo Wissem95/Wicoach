@@ -15,8 +15,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MEAL_TYPE_LABELS, TRAINING_TYPE_LABELS } from "@/types";
-import type { MealType, TrainingType } from "@/types";
+import { MEAL_TYPE_LABELS, trainingLabel } from "@/types";
+import type { MealType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -110,7 +110,7 @@ export default async function DashboardPage() {
                   className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs"
                 >
                   <Dumbbell className="h-3 w-3 text-primary" />
-                  <span className="font-medium">{TRAINING_TYPE_LABELS[w.type as TrainingType]}</span>
+                  <span className="font-medium">{trainingLabel(w.type)}</span>
                   {w.focus && <span className="text-muted-foreground">· {w.focus}</span>}
                   <span className="text-muted-foreground">· {w.durationMinutes}min</span>
                 </span>
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
             <div>
               <p className="text-xs text-muted-foreground">Séance prévue</p>
               <p className="font-semibold">
-                {todayWorkout ? TRAINING_TYPE_LABELS[todayWorkout.type as TrainingType] : "Repos"}
+                {todayWorkout ? trainingLabel(todayWorkout.type) : "Repos"}
                 {todayWorkout?.focus && (
                   <span className="font-normal text-muted-foreground"> · {todayWorkout.focus}</span>
                 )}

@@ -11,7 +11,11 @@ export const GET = withAuth(async (userId) => {
 });
 
 const schema = z.object({
-  type: z.enum(["salle", "piscine", "maison", "repos"]),
+  type: z
+    .string()
+    .min(1)
+    .max(40)
+    .transform((s) => s.trim().toLowerCase().replace(/\s+/g, "_")),
   focus: z.string().max(80).nullish(),
   duration_minutes: z.number().int().min(0).max(1000).default(0),
   completed: z.boolean().default(true),

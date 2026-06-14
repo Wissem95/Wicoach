@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DAY_LABELS, TRAINING_TYPE_LABELS } from "@/types";
+import { DAY_LABELS, TRAINING_TYPE_OPTIONS, trainingLabel } from "@/types";
 import type { TrainingType } from "@/types";
 
 interface PlanRow {
@@ -33,7 +33,7 @@ interface WorkoutLog {
 
 // Display order: Monday → Sunday (our day_of_week: 0=Sun..6=Sat).
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
-const TYPES = Object.keys(TRAINING_TYPE_LABELS) as TrainingType[];
+const TYPES = TRAINING_TYPE_OPTIONS;
 
 export function TrainingClient({
   initialPlan,
@@ -108,7 +108,7 @@ export function TrainingClient({
                 >
                   {TYPES.map((t) => (
                     <option key={t} value={t}>
-                      {TRAINING_TYPE_LABELS[t]}
+                      {trainingLabel(t)}
                     </option>
                   ))}
                 </Select>
@@ -178,7 +178,7 @@ function LogSection({ logs, plan }: { logs: WorkoutLog[]; plan: PlanRow[] }) {
     onSettled: () => qc.invalidateQueries({ queryKey: ["workout-logs"] }),
   });
 
-  const TYPES = Object.keys(TRAINING_TYPE_LABELS) as TrainingType[];
+  const TYPES = TRAINING_TYPE_OPTIONS;
 
   return (
     <Card>
@@ -192,7 +192,7 @@ function LogSection({ logs, plan }: { logs: WorkoutLog[]; plan: PlanRow[] }) {
             <Select id="log-type" value={type} onChange={(e) => setType(e.target.value as TrainingType)}>
               {TYPES.map((t) => (
                 <option key={t} value={t}>
-                  {TRAINING_TYPE_LABELS[t]}
+                  {trainingLabel(t)}
                 </option>
               ))}
             </Select>
@@ -253,7 +253,7 @@ function LogSection({ logs, plan }: { logs: WorkoutLog[]; plan: PlanRow[] }) {
             <div key={l.id} className="flex items-center justify-between rounded-md border px-2 py-1.5 text-sm">
               <div className="flex items-center gap-2">
                 <Badge variant={l.completed ? "default" : "destructive"}>
-                  {TRAINING_TYPE_LABELS[l.type]}
+                  {trainingLabel(l.type)}
                 </Badge>
                 <span className="text-muted-foreground">{l.performedAt}</span>
                 <span>{l.durationMinutes} min</span>

@@ -184,7 +184,8 @@ export const trainingPlan = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull(),
     dayOfWeek: smallint("day_of_week").notNull(),
-    type: trainingTypeEnum("type").notNull().default("repos"),
+    // Open text so the coach can use any activity (course, vélo, yoga…).
+    type: text("type").notNull().default("repos"),
     focus: text("focus"),
   },
   (t) => [
@@ -201,7 +202,7 @@ export const workoutLogs = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull(),
-    type: trainingTypeEnum("type").notNull(),
+    type: text("type").notNull(),
     focus: text("focus"),
     durationMinutes: integer("duration_minutes").notNull().default(0),
     completed: boolean("completed").notNull().default(true),

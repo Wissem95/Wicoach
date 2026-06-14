@@ -37,8 +37,12 @@ export const coachToolDeclarations: ToolDeclaration[] = [
       type: "OBJECT",
       properties: {
         day_of_week: { type: "INTEGER", description: "0=Dimanche … 6=Samedi" },
-        type: { type: "STRING", description: "salle | piscine | maison | repos" },
-        focus: { type: "STRING", description: "Focus optionnel (ex: Haut du corps)" },
+        type: {
+          type: "STRING",
+          description:
+            "N'importe quel type d'activité, en un mot minuscule : salle, maison, piscine, course, velo, marche, yoga, crossfit, cardio, repos…",
+        },
+        focus: { type: "STRING", description: "Détail optionnel (ex: Sortie longue 12 km)" },
       },
       required: ["day_of_week", "type"],
     },
@@ -152,7 +156,7 @@ export const coachToolDeclarations: ToolDeclaration[] = [
     parameters: {
       type: "OBJECT",
       properties: {
-        type: { type: "STRING", description: "salle | piscine | maison | repos" },
+        type: { type: "STRING", description: "Type d'activité (salle, course, velo, yoga, maison, piscine…)" },
         focus: { type: "STRING" },
         duration_minutes: { type: "INTEGER" },
         completed: { type: "BOOLEAN", description: "true = faite, false = pas faite" },
@@ -236,8 +240,15 @@ export const onboardingToolDeclarations: ToolDeclaration[] = [
 ];
 
 // ---- Executor ------------------------------------------------------------
-const TRAINING_TYPES = ["salle", "piscine", "maison", "repos"] as const;
 const MEAL_TYPES = ["petit_dej", "dejeuner", "diner", "snack"] as const;
+
+// Normalize a free-form activity type to a single lowercase token.
+function normType(v: unknown): string {
+  return String(v ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+}
 
 function num(v: unknown): number | null {
   const n = typeof v === "string" ? parseFloat(v) : (v as number);
@@ -266,16 +277,15 @@ export async function executeCoachTool(
 
     case "update_training_day": {
       const dow = Math.trunc(num(args.day_of_week) ?? -1);
-      const type = String(args.type ?? "");
-      if (dow < 0 || dow > 6 || !TRAINING_TYPES.includes(type as never))
-        return "paramètres invalides";
-      const focus = type === "repos" ? null : (args.focus ? String(args.focus).trim() : null);
+      const type = normType(args.type);
+      if (dow < 0 || dow > 6 || !type) return "paramètres invalides";
+      const focus = type === "repos" ? null : args.focus ? String(args.focus).trim() : null;
       await db
         .insert(trainingPlan)
-        .values({ userId, dayOfWeek: dow, type: type as never, focus })
+        .values({ userId, dayOfWeek: dow, type, focus })
         .onConflictDoUpdate({
           target: [trainingPlan.userId, trainingPlan.dayOfWeek],
-          set: { type: type as never, focus },
+          set: { type, focus },
         });
       return `jour ${dow} → ${type}${focus ? ` (${focus})` : ""}`;
     }
@@ -416,13 +426,13 @@ export async function executeCoachTool(
     }
 
     case "log_workout": {
-      const type = String(args.type ?? "");
-      if (!TRAINING_TYPES.includes(type as never)) return "type invalide";
+      const type = normType(args.type);
+      if (!type) return "type invalide";
       const dur = Math.max(0, Math.min(1000, Math.trunc(num(args.duration_minutes) ?? 0)));
       const completed = args.completed === false ? false : true;
       await db.insert(workoutLogs).values({
         userId,
-        type: type as never,
+        type,
         focus: args.focus ? String(args.focus).trim() : null,
         durationMinutes: dur,
         completed,

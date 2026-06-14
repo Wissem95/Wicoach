@@ -1,7 +1,8 @@
 // Shared application types.
 
 export type MealType = "petit_dej" | "dejeuner" | "diner" | "snack";
-export type TrainingType = "salle" | "piscine" | "maison" | "repos";
+// Open-ended: the coach can use any activity (course, vélo, yoga, crossfit…).
+export type TrainingType = string;
 export type ChatRole = "user" | "assistant";
 
 export const MEAL_TYPE_LABELS: Record<MealType, string> = {
@@ -11,12 +12,57 @@ export const MEAL_TYPE_LABELS: Record<MealType, string> = {
   snack: "Snack",
 };
 
-export const TRAINING_TYPE_LABELS: Record<TrainingType, string> = {
+// Known types get a nice label; anything else falls back to a capitalized form.
+export const TRAINING_TYPE_LABELS: Record<string, string> = {
   salle: "Salle",
   piscine: "Piscine",
   maison: "Maison",
   repos: "Repos",
+  course: "Course",
+  velo: "Vélo",
+  marche: "Marche",
+  yoga: "Yoga",
+  crossfit: "CrossFit",
+  hiit: "HIIT",
+  musculation: "Muscu",
+  cardio: "Cardio",
+  etirements: "Étirements",
+  sport_co: "Sport co",
 };
+
+// Suggested options for the dropdowns (the coach isn't limited to these).
+export const TRAINING_TYPE_OPTIONS = [
+  "salle",
+  "maison",
+  "piscine",
+  "course",
+  "velo",
+  "marche",
+  "yoga",
+  "crossfit",
+  "repos",
+];
+
+export function trainingLabel(t: string): string {
+  if (!t) return "—";
+  return TRAINING_TYPE_LABELS[t] ?? t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+const TRAINING_COLORS: Record<string, string> = {
+  salle: "bg-blue-500",
+  piscine: "bg-cyan-500",
+  maison: "bg-emerald-500",
+  repos: "bg-slate-300",
+  course: "bg-orange-500",
+  velo: "bg-amber-500",
+  marche: "bg-lime-500",
+  yoga: "bg-violet-500",
+  crossfit: "bg-rose-500",
+};
+
+export function trainingColor(t: string): string {
+  return TRAINING_COLORS[t] ?? "bg-primary";
+}
 
 export const DAY_LABELS = [
   "Dimanche",

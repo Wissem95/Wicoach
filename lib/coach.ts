@@ -10,8 +10,8 @@ import {
   getTodaySteps,
 } from "@/db/queries";
 import { buildCoachSystemPrompt, type CoachContext } from "@/lib/llm/prompts";
-import { DAY_LABELS, MEAL_TYPE_LABELS, TRAINING_TYPE_LABELS } from "@/types";
-import type { MealType, TrainingType } from "@/types";
+import { DAY_LABELS, MEAL_TYPE_LABELS, trainingLabel } from "@/types";
+import type { MealType } from "@/types";
 
 /** Gathers fresh user data and builds the coach system prompt. */
 export async function buildCoachContextPrompt(userId: string): Promise<string> {
@@ -48,14 +48,13 @@ export async function buildCoachContextPrompt(userId: string): Promise<string> {
       ? "non défini"
       : plan
           .map((d) => {
-            const label = TRAINING_TYPE_LABELS[d.type as TrainingType];
             const focus = d.focus ? ` - ${d.focus}` : "";
-            return `${DAY_LABELS[d.dayOfWeek]}: ${label}${focus}`;
+            return `${DAY_LABELS[d.dayOfWeek]}: ${trainingLabel(d.type)}${focus}`;
           })
           .join(" | ");
 
   const todayWorkout = todayPlan
-    ? `${TRAINING_TYPE_LABELS[todayPlan.type as TrainingType]}${todayPlan.focus ? ` (${todayPlan.focus})` : ""}`
+    ? `${trainingLabel(todayPlan.type)}${todayPlan.focus ? ` (${todayPlan.focus})` : ""}`
     : "repos / non défini";
 
   const sleepSummary = sleep

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TRAINING_TYPE_LABELS } from "@/types";
+import { trainingLabel } from "@/types";
 import type { TrainingType } from "@/types";
 
 const STEPS = ["Bienvenue", "Poids", "Cibles", "Entraînement", "Profil"];
@@ -189,7 +189,7 @@ export function OnboardingWizard() {
               <div className="space-y-1.5">
                 <Label className="text-sm">Type principal</Label>
                 <div className="flex flex-wrap gap-1.5">
-                  {(["maison", "salle", "piscine"] as TrainingType[]).map((t) => (
+                  {(["maison", "salle", "piscine", "course", "velo", "yoga"] as TrainingType[]).map((t) => (
                     <button
                       key={t}
                       type="button"
@@ -199,7 +199,7 @@ export function OnboardingWizard() {
                         ttype === t ? "bg-primary text-primary-foreground" : "hover:bg-accent",
                       )}
                     >
-                      {TRAINING_TYPE_LABELS[t]}
+                      {trainingLabel(t)}
                     </button>
                   ))}
                 </div>

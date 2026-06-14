@@ -20,7 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { TRAINING_TYPE_LABELS } from "@/types";
+import { trainingLabel, trainingColor } from "@/types";
 import type { TrainingType } from "@/types";
 
 type Status = "todo" | "doing" | "done";
@@ -33,13 +33,6 @@ const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
 const NEXT: Record<Status, Status> = { todo: "doing", doing: "done", done: "todo" };
 const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
-
-const typeColor: Record<TrainingType, string> = {
-  salle: "bg-blue-500",
-  piscine: "bg-cyan-500",
-  maison: "bg-emerald-500",
-  repos: "bg-slate-300",
-};
 
 const DEFAULT_ROUTINE = [
   { label: "Réveil", at_time: "07:00" },
@@ -256,7 +249,7 @@ export function CalendarClient({
                       />
                     </span>
                   ) : (
-                    p && p.type !== "repos" && <span className={cn("h-1.5 w-1.5 rounded-full", typeColor[p.type])} />
+                    p && p.type !== "repos" && <span className={cn("h-1.5 w-1.5 rounded-full", trainingColor(p.type))} />
                   )}
                 </button>
               );
@@ -273,7 +266,7 @@ export function CalendarClient({
               {new Date(selected + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
             </h2>
             {selPlan && selPlan.type !== "repos" && (
-              <Badge variant="secondary">{TRAINING_TYPE_LABELS[selPlan.type]}{selPlan.focus ? ` · ${selPlan.focus}` : ""}</Badge>
+              <Badge variant="secondary">{trainingLabel(selPlan.type)}{selPlan.focus ? ` · ${selPlan.focus}` : ""}</Badge>
             )}
           </div>
           {sel.total > 0 && (
