@@ -84,17 +84,17 @@ export function DashboardNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  "flex min-w-[62px] shrink-0 snap-start flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
+                  "flex min-w-[68px] shrink-0 snap-start flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-9 w-12 items-center justify-center rounded-full transition-colors",
+                    "flex h-11 w-16 items-center justify-center rounded-2xl transition-colors",
                     active && "bg-accent",
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-6 w-6" />
                 </span>
                 {short}
               </Link>

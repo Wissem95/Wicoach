@@ -1,63 +1,53 @@
-// Generates solid-emerald PNG app icons (no external deps).
-import { deflateSync } from "node:zlib";
-import { writeFileSync, mkdirSync } from "node:fs";
+// Generates the Wicoach app icons (gradient "W" monogram) with sharp.
+import sharp from "sharp";
+import { mkdirSync } from "node:fs";
 
-const COLOR = [16, 168, 109, 255]; // emerald
+const grad = `
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16c47f"/>
+      <stop offset="1" stop-color="#0d9488"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>`;
 
-const crcTable = (() => {
-  const t = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    t[n] = c >>> 0;
-  }
-  return t;
-})();
+const wMark = (sw = 50) => `
+  <path d="M128 148 L206 372 L256 256 L306 372 L384 148"
+        fill="none" stroke="#ffffff" stroke-width="${sw}"
+        stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="0"/>`;
 
-function crc32(buf) {
-  let c = 0xffffffff;
-  for (let i = 0; i < buf.length; i++) c = crcTable[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-}
+// Rounded icon (for browsers / any purpose)
+const rounded = (rx) => `
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  ${grad}
+  <rect width="512" height="512" rx="${rx}" fill="url(#g)"/>
+  <rect width="512" height="512" rx="${rx}" fill="url(#sheen)"/>
+  ${wMark(52)}
+</svg>`;
 
-function chunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length, 0);
-  const typeBuf = Buffer.from(type, "ascii");
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(Buffer.concat([typeBuf, data])), 0);
-  return Buffer.concat([len, typeBuf, data, crc]);
-}
-
-function png(size) {
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // RGBA
-  const row = Buffer.alloc(1 + size * 4);
-  for (let x = 0; x < size; x++) {
-    row[1 + x * 4] = COLOR[0];
-    row[1 + x * 4 + 1] = COLOR[1];
-    row[1 + x * 4 + 2] = COLOR[2];
-    row[1 + x * 4 + 3] = COLOR[3];
-  }
-  const raw = Buffer.concat(Array.from({ length: size }, () => row));
-  return Buffer.concat([
-    sig,
-    chunk("IHDR", ihdr),
-    chunk("IDAT", deflateSync(raw)),
-    chunk("IEND", Buffer.alloc(0)),
-  ]);
-}
+// Maskable: full-bleed bg, mark kept inside the safe zone (smaller).
+const maskable = `
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  ${grad}
+  <rect width="512" height="512" fill="url(#g)"/>
+  <g transform="translate(256 256) scale(0.74) translate(-256 -256)">${wMark(56)}</g>
+</svg>`;
 
 mkdirSync("public", { recursive: true });
-for (const [name, size] of [
-  ["icon-192.png", 192],
-  ["icon-512.png", 512],
-  ["apple-touch-icon.png", 180],
-]) {
-  writeFileSync(`public/${name}`, png(size));
-  console.log("wrote public/" + name);
+
+const jobs = [
+  { svg: rounded(112), size: 512, out: "public/icon-512.png" },
+  { svg: rounded(112), size: 192, out: "public/icon-192.png" },
+  { svg: rounded(40), size: 180, out: "public/apple-touch-icon.png" },
+  { svg: maskable, size: 512, out: "public/icon-maskable-512.png" },
+  { svg: rounded(96), size: 32, out: "public/favicon.png" },
+];
+
+for (const j of jobs) {
+  await sharp(Buffer.from(j.svg)).resize(j.size, j.size).png().toFile(j.out);
+  console.log("wrote", j.out);
 }

@@ -12,8 +12,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen">
       <DashboardNav />
-      {/* Extra bottom padding so content clears the mobile tab bar */}
-      <main className="container max-w-3xl py-5 pb-28 md:pb-10">{children}</main>
+      {/* Extra bottom padding so content clears the taller mobile tab bar */}
+      <main className="container max-w-3xl py-5 pb-36 md:pb-10">{children}</main>
     </div>
   );
 }
