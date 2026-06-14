@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { VoiceButton } from "@/components/voice-button";
 import type { ChatMessageView } from "@/types";
 
 const SUGGESTIONS = [
@@ -166,10 +167,11 @@ export function CoachClient({ initial, autoSend }: { initial: ChatMessageView[];
               send(input);
             }
           }}
-          placeholder="Écris au coach…"
+          placeholder="Écris au coach… (ou parle 🎤)"
           rows={1}
           className="max-h-32 min-h-[44px] resize-none"
         />
+        <VoiceButton onText={setInput} />
         <Button type="submit" size="icon" disabled={streaming || !input.trim()} aria-label="Envoyer">
           {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
