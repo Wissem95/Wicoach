@@ -97,7 +97,7 @@ export function OnboardingChat() {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-7rem)] flex-col">
+    <div className="flex h-full flex-col">
       <div className="flex-1 space-y-3 overflow-y-auto pb-4">
         {messages.map((m) => (
           <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>

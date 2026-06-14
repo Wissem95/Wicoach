@@ -219,7 +219,7 @@ export function OnboardingWizard() {
   return (
     <div className="w-full">
       <Card className="w-full">
-        <CardContent className="p-6">
+        <CardContent className="p-5 sm:p-6">
           <div className="mb-5 flex items-center gap-1.5">
             {STEPS.map((_, i) => (
               <div key={i} className={cn("h-1.5 flex-1 rounded-full", i <= step ? "bg-primary" : "bg-muted")} />

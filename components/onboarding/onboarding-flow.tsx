@@ -10,9 +10,9 @@ export function OnboardingFlow() {
   const [mode, setMode] = React.useState<"chat" | "form">("chat");
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 py-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 font-extrabold">
+    <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col px-3 py-3 sm:px-4">
+      <div className="mb-3 flex shrink-0 items-center justify-between">
+        <div className="flex items-center gap-1.5 text-lg font-extrabold">
           <span className="text-gradient">Wi</span>coach
         </div>
         <div className="flex rounded-full border p-0.5 text-xs">
@@ -20,7 +20,7 @@ export function OnboardingFlow() {
             type="button"
             onClick={() => setMode("chat")}
             className={cn(
-              "flex items-center gap-1 rounded-full px-2.5 py-1 font-medium",
+              "flex items-center gap-1 rounded-full px-2.5 py-1 font-medium transition-colors",
               mode === "chat" ? "bg-primary text-primary-foreground" : "text-muted-foreground",
             )}
           >
@@ -30,7 +30,7 @@ export function OnboardingFlow() {
             type="button"
             onClick={() => setMode("form")}
             className={cn(
-              "flex items-center gap-1 rounded-full px-2.5 py-1 font-medium",
+              "flex items-center gap-1 rounded-full px-2.5 py-1 font-medium transition-colors",
               mode === "form" ? "bg-primary text-primary-foreground" : "text-muted-foreground",
             )}
           >
@@ -39,7 +39,15 @@ export function OnboardingFlow() {
         </div>
       </div>
 
-      {mode === "chat" ? <OnboardingChat /> : <OnboardingWizard />}
+      <div className="min-h-0 flex-1">
+        {mode === "chat" ? (
+          <OnboardingChat />
+        ) : (
+          <div className="no-scrollbar h-full overflow-y-auto pb-4">
+            <OnboardingWizard />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
