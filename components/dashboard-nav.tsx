@@ -7,6 +7,7 @@ import { Home, Scale, Utensils, ShoppingBasket, Dumbbell, MessageCircle, LogOut,
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const LINKS = [
   { href: "/dashboard", label: "Aujourd'hui", short: "Accueil", icon: Home },
@@ -62,6 +63,7 @@ export function DashboardNav() {
           </nav>
 
           <div className="flex items-center gap-0.5">
+            <ThemeToggle />
             <Button asChild variant="ghost" size="icon" aria-label="Réglages">
               <Link href="/dashboard/settings">
                 <Settings className="h-4 w-4" />

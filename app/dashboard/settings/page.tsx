@@ -3,14 +3,20 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { customAlerts } from "@/db/schema";
 import { getProfile } from "@/db/queries";
-import { requireUserId } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { SettingsClient } from "@/components/settings/settings-client";
 import { AlertsManager } from "@/components/settings/alerts-manager";
+import { AccountSettings } from "@/components/settings/account-settings";
+import { ShareCard } from "@/components/settings/share-card";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const userId = await requireUserId();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user!.id;
   const [profile, alerts] = await Promise.all([
     getProfile(userId),
     db
@@ -53,6 +59,8 @@ export default async function SettingsPage() {
           enabled: a.enabled,
         }))}
       />
+      <ShareCard />
+      <AccountSettings email={user?.email ?? ""} />
     </div>
   );
 }
