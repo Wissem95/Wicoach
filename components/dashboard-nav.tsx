@@ -74,9 +74,9 @@ export function DashboardNav() {
         </div>
       </header>
 
-      {/* Mobile bottom tab bar */}
+      {/* Mobile bottom tab bar — horizontally scrollable so icons stay comfortable */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 card-glass pb-[env(safe-area-inset-bottom)] md:hidden">
-        <div className="mx-auto flex max-w-lg items-stretch justify-between px-1">
+        <div className="no-scrollbar flex snap-x gap-1 overflow-x-auto px-2">
           {LINKS.map(({ href, short, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
@@ -84,17 +84,17 @@ export function DashboardNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  "flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
+                  "flex min-w-[62px] shrink-0 snap-start flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-8 w-12 items-center justify-center rounded-full transition-colors",
+                    "flex h-9 w-12 items-center justify-center rounded-full transition-colors",
                     active && "bg-accent",
                   )}
                 >
-                  <Icon className="h-[18px] w-[18px]" />
+                  <Icon className="h-5 w-5" />
                 </span>
                 {short}
               </Link>
