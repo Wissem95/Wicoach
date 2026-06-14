@@ -49,12 +49,12 @@ begin
   end if;
 
   -- ---- Profil + mémoire coach -------------------------------------------
-  insert into profiles (id, current_weight, target_weight, target_calories, target_protein, target_carbs, target_fats, coach_notes, email_reminders)
-  values (uid, 100, 90, 1500, 110, 80, 60, notes, true)
+  insert into profiles (id, current_weight, target_weight, target_calories, target_protein, target_carbs, target_fats, coach_notes, email_reminders, onboarded)
+  values (uid, 100, 90, 1500, 110, 80, 60, notes, true, true)
   on conflict (id) do update set
     current_weight = 100, target_weight = 90, target_calories = 1500,
     target_protein = 110, target_carbs = 80, target_fats = 60,
-    coach_notes = excluded.coach_notes, email_reminders = true, updated_at = now();
+    coach_notes = excluded.coach_notes, email_reminders = true, onboarded = true, updated_at = now();
 
   -- pesée du jour
   insert into weight_logs (user_id, weight, logged_at) values (uid, 100, current_date)

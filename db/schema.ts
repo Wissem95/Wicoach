@@ -55,6 +55,7 @@ export const profiles = pgTable("profiles", {
   ingestToken: uuid("ingest_token").notNull().defaultRandom(),
   emailReminders: boolean("email_reminders").notNull().default(true),
   pushEnabled: boolean("push_enabled").notNull().default(false),
+  onboarded: boolean("onboarded").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
