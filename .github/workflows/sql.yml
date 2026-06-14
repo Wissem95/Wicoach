@@ -1,0 +1,30 @@
+name: Admin SQL
+
+on:
+  workflow_dispatch:
+    inputs:
+      database_url:
+        description: "Supabase DATABASE_URL (pooler 6543)"
+        required: true
+      sql:
+        description: "SQL to execute"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - env:
+          DATABASE_URL: ${{ inputs.database_url }}
+          SQL: ${{ inputs.sql }}
+        run: |
+          echo "::add-mask::$DATABASE_URL"
+          node scripts/run-sql.mjs
