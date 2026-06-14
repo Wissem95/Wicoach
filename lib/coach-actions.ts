@@ -235,7 +235,10 @@ export const onboardingToolDeclarations: ToolDeclaration[] = [
     name: "complete_onboarding",
     description:
       "À appeler UNIQUEMENT à la fin de l'onboarding, une fois les cibles, le plan d'entraînement et la routine configurés. Marque la configuration comme terminée.",
-    parameters: { type: "OBJECT", properties: {} },
+    parameters: {
+      type: "OBJECT",
+      properties: { confirm: { type: "BOOLEAN", description: "true pour confirmer" } },
+    },
   },
 ];
 

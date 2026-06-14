@@ -102,7 +102,6 @@ export function OnboardingWizard() {
   const [hip, setHip] = React.useState("");
   const [likes, setLikes] = React.useState("");
   const [dislikes, setDislikes] = React.useState("");
-  const [phase, setPhase] = React.useState<"form" | "generating">("form");
 
   const nums = {
     age: parseInt(age, 10),
@@ -200,34 +199,21 @@ export function OnboardingWizard() {
         training,
         seed_routine: true,
       });
-      // 2) Let the coach build the full program (menus + detailed sessions).
-      setPhase("generating");
-      await apiSend("/api/onboarding/generate", "POST", { summary }).catch(() => null);
-      toast.success("Ton programme est prêt ! 🎉");
+      // 2) Build the full program (menus + sessions) in the BACKGROUND so the
+      // user isn't stuck waiting. keepalive lets it finish after navigation.
+      fetch("/api/onboarding/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ summary }),
+        keepalive: true,
+      }).catch(() => {});
+      toast.success("C'est prêt ! Ton programme se complète en arrière-plan 🎉");
       router.replace("/dashboard");
       router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Échec");
       setLoading(false);
-      setPhase("form");
     }
-  }
-
-  if (phase === "generating") {
-    return (
-      <div className="w-full">
-        <Card className="w-full">
-          <CardContent className="space-y-3 p-8 text-center">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
-            <h2 className="text-xl font-bold">Ton coach construit ton programme…</h2>
-            <p className="text-sm text-muted-foreground">
-              Menus de journée (allergies & préférences respectées) + séances détaillées adaptées à
-              ton matériel. Quelques secondes ⏳
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
   }
 
   return (
