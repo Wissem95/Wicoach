@@ -3,13 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Scale, Utensils, ShoppingBasket, Dumbbell, MessageCircle, LogOut, Settings } from "lucide-react";
+import { Home, Scale, Utensils, ShoppingBasket, Dumbbell, MessageCircle, LogOut, Settings, CalendarDays } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const LINKS = [
   { href: "/dashboard", label: "Aujourd'hui", short: "Accueil", icon: Home },
+  { href: "/dashboard/calendar", label: "Calendrier", short: "Agenda", icon: CalendarDays },
   { href: "/dashboard/weight", label: "Poids", short: "Poids", icon: Scale },
   { href: "/dashboard/meals", label: "Repas", short: "Repas", icon: Utensils },
   { href: "/dashboard/pantry", label: "Garde-manger", short: "Frigo", icon: ShoppingBasket },

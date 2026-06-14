@@ -35,6 +35,8 @@ export const trainingTypeEnum = pgEnum("training_type", [
   "repos",
 ]);
 
+export const taskStatusEnum = pgEnum("task_status", ["todo", "doing", "done"]);
+
 // ---------------------------------------------------------------------------
 // profiles — 1 row per auth user
 // ---------------------------------------------------------------------------
@@ -266,6 +268,22 @@ export const pushSubscriptions = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// tasks — calendar checklist (todo / doing / done) per day
+// ---------------------------------------------------------------------------
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    title: text("title").notNull(),
+    status: taskStatusEnum("status").notNull().default("todo"),
+    dueDate: date("due_date").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("tasks_user_due_idx").on(t.userId, t.dueDate)],
+);
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 export type Profile = typeof profiles.$inferSelect;
@@ -280,3 +298,4 @@ export type WorkoutLog = typeof workoutLogs.$inferSelect;
 export type StepsLog = typeof stepsLogs.$inferSelect;
 export type SleepLog = typeof sleepLogs.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type Task = typeof tasks.$inferSelect;

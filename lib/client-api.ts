@@ -15,7 +15,7 @@ export async function apiGet<T>(url: string): Promise<T> {
 
 export async function apiSend<T>(
   url: string,
-  method: "POST" | "PUT" | "DELETE",
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
   body?: unknown,
 ): Promise<T> {
   return handle<T>(
