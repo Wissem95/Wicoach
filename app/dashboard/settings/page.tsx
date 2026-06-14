@@ -1,13 +1,24 @@
 import { headers } from "next/headers";
+import { asc, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { customAlerts } from "@/db/schema";
 import { getProfile } from "@/db/queries";
 import { requireUserId } from "@/lib/supabase/server";
 import { SettingsClient } from "@/components/settings/settings-client";
+import { AlertsManager } from "@/components/settings/alerts-manager";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const userId = await requireUserId();
-  const profile = await getProfile(userId);
+  const [profile, alerts] = await Promise.all([
+    getProfile(userId),
+    db
+      .select()
+      .from(customAlerts)
+      .where(eq(customAlerts.userId, userId))
+      .orderBy(asc(customAlerts.atTime)),
+  ]);
 
   // Build the public origin for the Apple Health ingest URL.
   const h = await headers();
@@ -31,6 +42,16 @@ export default async function SettingsPage() {
           ingestToken: profile.ingestToken,
         }}
         ingestUrl={`${origin}/api/ingest`}
+      />
+      <AlertsManager
+        initial={alerts.map((a) => ({
+          id: a.id,
+          label: a.label,
+          atTime: a.atTime,
+          days: a.days,
+          channel: a.channel as "push" | "email" | "both",
+          enabled: a.enabled,
+        }))}
       />
     </div>
   );

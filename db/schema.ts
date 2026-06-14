@@ -284,6 +284,25 @@ export const tasks = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// custom_alerts — user-defined timed reminders (wake-up, prayer, supplements…)
+// ---------------------------------------------------------------------------
+export const customAlerts = pgTable(
+  "custom_alerts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    label: text("label").notNull(),
+    atTime: text("at_time").notNull(), // "HH:MM" Europe/Paris
+    days: text("days"), // "0,1,..6" (0=Sun); null = every day
+    channel: text("channel").notNull().default("push"), // push | email | both
+    enabled: boolean("enabled").notNull().default(true),
+    lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("custom_alerts_user_idx").on(t.userId)],
+);
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 export type Profile = typeof profiles.$inferSelect;
@@ -299,3 +318,4 @@ export type StepsLog = typeof stepsLogs.$inferSelect;
 export type SleepLog = typeof sleepLogs.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
+export type CustomAlert = typeof customAlerts.$inferSelect;

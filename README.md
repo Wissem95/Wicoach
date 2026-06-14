@@ -140,6 +140,18 @@ Pas d'accès direct depuis le web. Va dans **Réglages**, copie ton **URL d'inge
 qui lit Santé et fait un POST JSON `{ "steps":…, "weight":…, "sleep_hours":… }`.
 Saisie manuelle aussi possible depuis Réglages.
 
+## Migrations 0002 & 0003 — calendrier + alertes
+
+Exécute aussi **`db/migrations/0002_tasks.sql`** (calendrier à cocher) et
+**`db/migrations/0003_alerts.sql`** (alertes perso).
+
+### Alertes à heures précises (réveil, prière, compléments…)
+Vercel Hobby ne lance les crons qu'une fois par jour. Pour des alertes à
+l'heure exacte, fais pinguer `/api/cron/alerts?token=<CRON_SECRET>` **toutes les
+~10 min** par un planificateur gratuit (ex: **cron-job.org**). L'endpoint envoie
+les alertes dues (push + email) sans doublon. Configure tes alertes dans
+**Réglages → Alertes personnalisées**.
+
 ## Notes
 
 - L'analyse photo est une **estimation (±20-30 %)**, affichée et éditable avant save.
