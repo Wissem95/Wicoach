@@ -1,0 +1,28 @@
+name: DB Migrate
+
+on:
+  workflow_dispatch:
+    inputs:
+      database_url:
+        description: "Supabase DATABASE_URL (transaction pooler, port 6543)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install deps
+        run: npm install --no-audit --no-fund
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ inputs.database_url }}
+        run: |
+          echo "::add-mask::$DATABASE_URL"
+          node scripts/migrate.mjs
