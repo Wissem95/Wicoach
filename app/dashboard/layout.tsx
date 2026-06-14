@@ -18,7 +18,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="min-h-screen">
       <DashboardNav />
       {/* Extra bottom padding so content clears the taller mobile tab bar */}
-      <main className="container max-w-3xl py-5 pb-36 md:pb-10">{children}</main>
+      <main className="container max-w-3xl py-5 pb-36 duration-300 animate-in fade-in md:pb-10">
+        {children}
+      </main>
     </div>
   );
 }

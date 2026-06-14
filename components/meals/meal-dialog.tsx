@@ -133,12 +133,12 @@ export function MealDialog({
         </DialogHeader>
 
         {aiAnalyzed && aiMeta && (
-          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
             <div className="flex items-center gap-2 font-medium">
               <AlertTriangle className="h-4 w-4" />
               Estimation IA (±20-30%) — confiance {aiMeta.confidence}%
             </div>
-            {aiMeta.notes && <p className="mt-1 text-amber-800">{aiMeta.notes}</p>}
+            {aiMeta.notes && <p className="mt-1 text-amber-800 dark:text-amber-300">{aiMeta.notes}</p>}
             <p className="mt-1 text-xs">Vérifie et corrige avant d&apos;enregistrer.</p>
           </div>
         )}

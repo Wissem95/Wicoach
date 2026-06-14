@@ -182,8 +182,8 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Sleep nudge — sommeil = levier de premier plan */}
-      <Card className="border-amber-200 bg-amber-50/70">
-        <CardContent className="flex items-start gap-3 p-4 text-sm text-amber-900">
+      <Card className="border-amber-200 bg-amber-50/70 dark:border-amber-900/50 dark:bg-amber-950/30">
+        <CardContent className="flex items-start gap-3 p-4 text-sm text-amber-900 dark:text-amber-200">
           <Moon className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
             Mal dormi ? Dis-le au coach — un sommeil &lt; 7h freine la perte de poids, il
