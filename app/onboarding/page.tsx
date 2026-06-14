@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/db/queries";
-import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 
 export const dynamic = "force-dynamic";
 
@@ -15,5 +15,5 @@ export default async function OnboardingPage() {
   const profile = await getProfile(user.id);
   if (profile.onboarded) redirect("/dashboard");
 
-  return <OnboardingWizard />;
+  return <OnboardingFlow />;
 }

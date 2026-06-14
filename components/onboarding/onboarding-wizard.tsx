@@ -93,8 +93,8 @@ export function OnboardingWizard() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="w-full">
+      <Card className="w-full">
         <CardContent className="p-6">
           {/* progress */}
           <div className="mb-5 flex items-center gap-1.5">

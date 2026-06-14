@@ -224,6 +224,17 @@ export const coachToolDeclarations: ToolDeclaration[] = [
   },
 ];
 
+// complete_onboarding is only offered during the onboarding conversation.
+export const onboardingToolDeclarations: ToolDeclaration[] = [
+  ...coachToolDeclarations,
+  {
+    name: "complete_onboarding",
+    description:
+      "À appeler UNIQUEMENT à la fin de l'onboarding, une fois les cibles, le plan d'entraînement et la routine configurés. Marque la configuration comme terminée.",
+    parameters: { type: "OBJECT", properties: {} },
+  },
+];
+
 // ---- Executor ------------------------------------------------------------
 const TRAINING_TYPES = ["salle", "piscine", "maison", "repos"] as const;
 const MEAL_TYPES = ["petit_dej", "dejeuner", "diner", "snack"] as const;
@@ -472,6 +483,11 @@ export async function executeCoachTool(
         : "both";
       await db.insert(customAlerts).values({ userId, label, atTime: at, channel });
       return `alerte créée: ${label} à ${at}`;
+    }
+
+    case "complete_onboarding": {
+      await db.update(profiles).set({ onboarded: true, updatedAt: new Date() }).where(eq(profiles.id, userId));
+      return "onboarding terminé";
     }
 
     default:
