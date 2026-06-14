@@ -6,6 +6,14 @@ import {
   pantryItems,
   favoriteMeals,
   weightLogs,
+  meals,
+  foodItems,
+  workoutLogs,
+  sleepLogs,
+  stepsLogs,
+  tasks,
+  routineItems,
+  customAlerts,
 } from "@/db/schema";
 import { todayISO } from "@/lib/utils";
 import type { ToolDeclaration } from "@/lib/llm/types";
@@ -108,6 +116,110 @@ export const coachToolDeclarations: ToolDeclaration[] = [
         date: { type: "STRING", description: "YYYY-MM-DD, défaut aujourd'hui" },
       },
       required: ["weight"],
+    },
+  },
+  {
+    name: "log_meal",
+    description:
+      "Enregistre un repas RÉELLEMENT consommé par l'utilisateur dans son journal du jour (compteur kcal/macros). À utiliser dès qu'il dit avoir mangé quelque chose.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        name: { type: "STRING" },
+        meal_type: { type: "STRING", description: "petit_dej | dejeuner | diner | snack" },
+        items: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              food_name: { type: "STRING" },
+              portion: { type: "NUMBER" },
+              calories: { type: "INTEGER" },
+              protein: { type: "INTEGER" },
+              carbs: { type: "INTEGER" },
+              fats: { type: "INTEGER" },
+            },
+            required: ["food_name"],
+          },
+        },
+      },
+      required: ["name", "items"],
+    },
+  },
+  {
+    name: "log_workout",
+    description: "Enregistre une séance réalisée (ou non) par l'utilisateur aujourd'hui.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        type: { type: "STRING", description: "salle | piscine | maison | repos" },
+        focus: { type: "STRING" },
+        duration_minutes: { type: "INTEGER" },
+        completed: { type: "BOOLEAN", description: "true = faite, false = pas faite" },
+        notes: { type: "STRING" },
+      },
+      required: ["type"],
+    },
+  },
+  {
+    name: "log_sleep",
+    description: "Enregistre la durée de sommeil (en heures) d'une nuit.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        hours: { type: "NUMBER" },
+        date: { type: "STRING", description: "YYYY-MM-DD, défaut aujourd'hui" },
+      },
+      required: ["hours"],
+    },
+  },
+  {
+    name: "log_steps",
+    description: "Enregistre le nombre de pas d'une journée.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        steps: { type: "INTEGER" },
+        date: { type: "STRING", description: "YYYY-MM-DD, défaut aujourd'hui" },
+      },
+      required: ["steps"],
+    },
+  },
+  {
+    name: "add_task",
+    description: "Ajoute une tâche au calendrier (par défaut aujourd'hui).",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        title: { type: "STRING" },
+        due_date: { type: "STRING", description: "YYYY-MM-DD, défaut aujourd'hui" },
+      },
+      required: ["title"],
+    },
+  },
+  {
+    name: "add_routine_item",
+    description: "Ajoute un élément récurrent à la routine quotidienne (checklist du jour).",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        label: { type: "STRING" },
+        at_time: { type: "STRING", description: "HH:MM optionnel" },
+      },
+      required: ["label"],
+    },
+  },
+  {
+    name: "add_alert",
+    description: "Crée une alerte/rappel programmé (réveil, compléments, hydratation…).",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        label: { type: "STRING" },
+        at_time: { type: "STRING", description: "HH:MM (24h)" },
+        channel: { type: "STRING", description: "push | email | both (défaut both)" },
+      },
+      required: ["label", "at_time"],
     },
   },
 ];
@@ -233,7 +345,140 @@ export async function executeCoachTool(
       return `pesée enregistrée: ${w}kg le ${date}`;
     }
 
+    case "log_meal": {
+      const mealName = String(args.name ?? "").trim();
+      const rawType = String(args.meal_type ?? "");
+      const mealType = MEAL_TYPES.includes(rawType as never)
+        ? rawType
+        : rawType === "collation"
+          ? "snack"
+          : "dejeuner";
+      const rawItems = Array.isArray(args.items) ? args.items : [];
+      const items = rawItems.map((it) => {
+        const o = it as Record<string, unknown>;
+        return {
+          food_name: String(o.food_name ?? "Aliment"),
+          portion: num(o.portion) ?? 100,
+          calories: Math.round(num(o.calories) ?? 0),
+          protein: Math.round(num(o.protein) ?? 0),
+          carbs: Math.round(num(o.carbs) ?? 0),
+          fats: Math.round(num(o.fats) ?? 0),
+        };
+      });
+      if (!mealName || items.length === 0) return "nom + aliments requis";
+      const totals = items.reduce(
+        (a, i) => ({
+          calories: a.calories + i.calories,
+          protein: a.protein + i.protein,
+          carbs: a.carbs + i.carbs,
+          fats: a.fats + i.fats,
+        }),
+        { calories: 0, protein: 0, carbs: 0, fats: 0 },
+      );
+      const [meal] = await db
+        .insert(meals)
+        .values({
+          userId,
+          name: mealName,
+          mealType: mealType as never,
+          mealTime: new Date(),
+          totalCalories: Math.min(10000, totals.calories),
+          totalProtein: totals.protein,
+          totalCarbs: totals.carbs,
+          totalFats: totals.fats,
+          aiAnalyzed: true,
+        })
+        .returning();
+      await db.insert(foodItems).values(
+        items.map((i) => ({
+          mealId: meal.id,
+          foodName: i.food_name,
+          portion: i.portion,
+          unit: "g",
+          calories: i.calories,
+          protein: i.protein,
+          carbs: i.carbs,
+          fats: i.fats,
+        })),
+      );
+      return `repas loggé: ${mealName} (${totals.calories} kcal, P${totals.protein}/G${totals.carbs}/L${totals.fats})`;
+    }
+
+    case "log_workout": {
+      const type = String(args.type ?? "");
+      if (!TRAINING_TYPES.includes(type as never)) return "type invalide";
+      const dur = Math.max(0, Math.min(1000, Math.trunc(num(args.duration_minutes) ?? 0)));
+      const completed = args.completed === false ? false : true;
+      await db.insert(workoutLogs).values({
+        userId,
+        type: type as never,
+        focus: args.focus ? String(args.focus).trim() : null,
+        durationMinutes: dur,
+        completed,
+        notes: args.notes ? String(args.notes).trim() : null,
+        performedAt: todayISO(),
+      });
+      return `séance loggée: ${type} ${dur}min (${completed ? "faite" : "pas faite"})`;
+    }
+
+    case "log_sleep": {
+      const h = num(args.hours);
+      if (h === null || h < 0 || h > 24) return "heures invalides";
+      const date = dateArg(args.date);
+      await db
+        .insert(sleepLogs)
+        .values({ userId, hours: h, loggedAt: date })
+        .onConflictDoUpdate({ target: [sleepLogs.userId, sleepLogs.loggedAt], set: { hours: h } });
+      return `sommeil loggé: ${h}h le ${date}`;
+    }
+
+    case "log_steps": {
+      const s = num(args.steps);
+      if (s === null || s < 0) return "pas invalides";
+      const date = dateArg(args.date);
+      const steps = Math.round(s);
+      await db
+        .insert(stepsLogs)
+        .values({ userId, steps, loggedAt: date })
+        .onConflictDoUpdate({ target: [stepsLogs.userId, stepsLogs.loggedAt], set: { steps } });
+      return `pas loggés: ${steps} le ${date}`;
+    }
+
+    case "add_task": {
+      const title = String(args.title ?? "").trim();
+      if (!title) return "titre requis";
+      const date = dateArg(args.due_date);
+      await db.insert(tasks).values({ userId, title, dueDate: date });
+      return `tâche ajoutée: ${title} (${date})`;
+    }
+
+    case "add_routine_item": {
+      const label = String(args.label ?? "").trim();
+      if (!label) return "label requis";
+      const at =
+        typeof args.at_time === "string" && /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(args.at_time)
+          ? args.at_time
+          : null;
+      await db.insert(routineItems).values({ userId, label, atTime: at, sort: 999 });
+      return `routine: ajouté ${label}`;
+    }
+
+    case "add_alert": {
+      const label = String(args.label ?? "").trim();
+      const at = String(args.at_time ?? "");
+      if (!label || !/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(at)) return "label + heure HH:MM requis";
+      const channel = ["push", "email", "both"].includes(String(args.channel))
+        ? String(args.channel)
+        : "both";
+      await db.insert(customAlerts).values({ userId, label, atTime: at, channel });
+      return `alerte créée: ${label} à ${at}`;
+    }
+
     default:
       return `outil inconnu: ${name}`;
   }
+}
+
+function dateArg(v: unknown): string {
+  return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && v <= todayISO() ? v : todayISO();
 }
