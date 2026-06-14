@@ -2,21 +2,16 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, Scale, Utensils, ShoppingBasket, Dumbbell, MessageCircle, LogOut, Settings, CalendarDays } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
+import { Home, Utensils, MessageCircle, CalendarDays, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const LINKS = [
-  { href: "/dashboard", label: "Aujourd'hui", short: "Accueil", icon: Home },
-  { href: "/dashboard/calendar", label: "Calendrier", short: "Agenda", icon: CalendarDays },
-  { href: "/dashboard/weight", label: "Poids", short: "Poids", icon: Scale },
-  { href: "/dashboard/meals", label: "Repas", short: "Repas", icon: Utensils },
-  { href: "/dashboard/pantry", label: "Garde-manger", short: "Frigo", icon: ShoppingBasket },
-  { href: "/dashboard/training", label: "Entraînement", short: "Training", icon: Dumbbell },
-  { href: "/dashboard/coach", label: "Coach", short: "Coach", icon: MessageCircle },
+  { href: "/dashboard", label: "Accueil", icon: Home },
+  { href: "/dashboard/meals", label: "Repas", icon: Utensils },
+  { href: "/dashboard/calendar", label: "Calendrier", icon: CalendarDays },
+  { href: "/dashboard/plus", label: "Plus", icon: LayoutGrid },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -25,13 +20,7 @@ function isActive(pathname: string, href: string) {
 
 export function DashboardNav() {
   const pathname = usePathname();
-  const router = useRouter();
-
-  async function logout() {
-    await createClient().auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
+  const coachActive = pathname.startsWith("/dashboard/coach");
 
   return (
     <>
@@ -41,69 +30,65 @@ export function DashboardNav() {
           <Link href="/dashboard" className="flex items-center gap-1 text-lg font-extrabold tracking-tight">
             <span className="text-gradient">Wi</span>coach
           </Link>
-
           {/* Desktop inline nav */}
           <nav className="hidden items-center gap-1 md:flex">
-            {LINKS.map(({ href, label, icon: Icon }) => {
-              const active = isActive(pathname, href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                    active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-accent",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </Link>
-              );
-            })}
+            {[LINKS[0], LINKS[1], { href: "/dashboard/coach", label: "Coach", icon: MessageCircle }, LINKS[2], LINKS[3]].map(
+              ({ href, label, icon: Icon }) => {
+                const active = isActive(pathname, href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-accent",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Link>
+                );
+              },
+            )}
           </nav>
-
-          <div className="flex items-center gap-0.5">
-            <ThemeToggle />
-            <Button asChild variant="ghost" size="icon" aria-label="Réglages">
-              <Link href="/dashboard/settings">
-                <Settings className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={logout} aria-label="Se déconnecter">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+          <ThemeToggle />
         </div>
       </header>
 
-      {/* Mobile bottom tab bar — horizontally scrollable so icons stay comfortable */}
+      {/* Mobile bottom bar with a raised central Coach button */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 card-glass pb-[env(safe-area-inset-bottom)] md:hidden">
-        <div className="no-scrollbar flex snap-x gap-1 overflow-x-auto px-2">
-          {LINKS.map(({ href, short, icon: Icon }) => {
-            const active = isActive(pathname, href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex min-w-[68px] shrink-0 snap-start flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex h-11 w-16 items-center justify-center rounded-2xl transition-colors",
-                    active && "bg-accent",
-                  )}
-                >
-                  <Icon className="h-6 w-6" />
-                </span>
-                {short}
-              </Link>
-            );
-          })}
+        <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2">
+          <NavItem {...LINKS[0]} active={isActive(pathname, LINKS[0].href)} />
+          <NavItem {...LINKS[1]} active={isActive(pathname, LINKS[1].href)} />
+
+          {/* Center Coach FAB */}
+          <Link href="/dashboard/coach" className="flex flex-col items-center">
+            <span
+              className={cn(
+                "-mt-6 flex h-14 w-14 items-center justify-center rounded-full border-4 border-background bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95",
+                coachActive && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+              )}
+            >
+              <MessageCircle className="h-6 w-6" />
+            </span>
+            <span className={cn("mt-0.5 text-[11px] font-medium", coachActive ? "text-primary" : "text-muted-foreground")}>
+              Coach
+            </span>
+          </Link>
+
+          <NavItem {...LINKS[2]} active={isActive(pathname, LINKS[2].href)} />
+          <NavItem {...LINKS[3]} active={isActive(pathname, LINKS[3].href)} />
         </div>
       </nav>
     </>
+  );
+}
+
+function NavItem({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Home; active: boolean }) {
+  return (
+    <Link href={href} className="flex flex-col items-center gap-1 py-2.5">
+      <Icon className={cn("h-6 w-6", active ? "text-primary" : "text-muted-foreground")} />
+      <span className={cn("text-[11px] font-medium", active ? "text-primary" : "text-muted-foreground")}>{label}</span>
+    </Link>
   );
 }

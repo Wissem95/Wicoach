@@ -14,15 +14,25 @@ const SUGGESTIONS = [
   "J'ai mal dormi cette nuit (moins de 7h)",
 ];
 
-export function CoachClient({ initial }: { initial: ChatMessageView[] }) {
+export function CoachClient({ initial, autoSend }: { initial: ChatMessageView[]; autoSend?: string }) {
   const [messages, setMessages] = React.useState<ChatMessageView[]>(initial);
   const [input, setInput] = React.useState("");
   const [streaming, setStreaming] = React.useState(false);
   const endRef = React.useRef<HTMLDivElement>(null);
+  const autoSentRef = React.useRef(false);
 
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Auto-send a question passed via ?q= (shortcut from the dashboard).
+  React.useEffect(() => {
+    if (autoSend && !autoSentRef.current) {
+      autoSentRef.current = true;
+      send(autoSend);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSend]);
 
   async function send(text: string) {
     const content = text.trim();
