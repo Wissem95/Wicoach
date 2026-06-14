@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/db/queries";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { QuickActions } from "@/components/quick-actions";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -21,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="container max-w-3xl py-5 pb-36 duration-300 animate-in fade-in md:pb-10">
         {children}
       </main>
+      <QuickActions />
     </div>
   );
 }

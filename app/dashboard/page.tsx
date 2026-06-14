@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Dumbbell, ArrowRight, Moon, Plus, Camera, MessageCircle, Sparkles } from "lucide-react";
+import { Dumbbell, ArrowRight, Moon, MessageCircle, Sparkles } from "lucide-react";
 import {
   getProfile,
   getWeightLogs,
@@ -13,9 +13,9 @@ import {
 import { requireUserId } from "@/lib/supabase/server";
 import { clamp, todayISO } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { ProgressRing } from "@/components/ui/progress-ring";
 import { Badge } from "@/components/ui/badge";
 import { QuickWorkoutDone, QuickMeals, type QuickFavorite } from "@/components/dashboard/quick";
+import { WeightHeroCard, NutritionCard } from "@/components/dashboard/tap-cards";
 import { MEAL_TYPE_LABELS, trainingLabel } from "@/types";
 import type { MealType, TrainingType, FoodLine } from "@/types";
 
@@ -58,62 +58,39 @@ export default async function DashboardPage() {
     items: (f.items as FoodLine[]) ?? [],
   }));
 
+  const remaining = Math.max(0, profile.targetCalories - totals.calories);
+  const sessionLabel = todayWorkout && todayWorkout.type !== "repos"
+    ? `${trainingLabel(todayWorkout.type)}${todayWorkout.focus ? ` (${todayWorkout.focus})` : ""}`
+    : "repos / récup";
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold">Bonjour 👋</h1>
 
-      {/* Weight hero — tap to log a weigh-in */}
-      <Link href="/dashboard/weight" className="block">
-        <Card className="overflow-hidden border-0 bg-gradient-to-br from-emerald-600 to-teal-500 text-white shadow-soft transition-transform active:scale-[0.99]">
-          <CardContent className="flex items-center gap-5 p-5">
-            <ProgressRing
-              value={start - current}
-              max={goalSpan > 0 ? goalSpan : 1}
-              size={96}
-              stroke={10}
-              color="white"
-              trackColor="rgba(255,255,255,0.25)"
-              label={`${goalPct}%`}
-              sublabel="objectif"
-            />
-            <div className="min-w-0">
-              <p className="text-sm/none text-white/80">Poids actuel</p>
-              <p className="mt-1 text-4xl font-extrabold tracking-tight">
-                {current}
-                <span className="ml-1 text-lg font-semibold text-white/80">kg</span>
-              </p>
-              <p className="mt-1.5 text-sm text-white/90">
-                {toGo > 0 ? `Encore ${toGo} kg → ${profile.targetWeight} kg` : `Objectif atteint 🎉`}
-              </p>
-              <p className="mt-1 inline-flex items-center gap-1 text-xs text-white/80">
-                <Plus className="h-3 w-3" /> Toucher pour peser
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
+      {/* Morning brief */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="p-4">
+          <h2 className="mb-1.5 text-sm font-semibold">Voici ta journée</h2>
+          <ul className="space-y-1 text-sm">
+            <li>🍽️ Cible {profile.targetCalories} kcal — il te reste <b>{remaining} kcal</b> ({totals.protein}/{profile.targetProtein}g protéines).</li>
+            <li>🏋️ Séance du jour : <b>{sessionLabel}</b>.</li>
+            <li>😴 Vise 7h+ de sommeil — c&apos;est ton meilleur levier.</li>
+          </ul>
+          <Link
+            href={`/dashboard/coach?q=${encodeURIComponent("Fais-moi le brief de ma journée et un plan concret pour aujourd'hui")}`}
+            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            <MessageCircle className="h-4 w-4" /> Brief complet par le coach
+          </Link>
+        </CardContent>
+      </Card>
 
-      {/* Nutrition — tap to add a meal */}
-      <Link href="/dashboard/meals" className="block">
-        <Card className="transition-transform active:scale-[0.99]">
-          <CardContent className="p-4">
-            <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Nutrition du jour</h2>
-              <Badge variant="secondary">{totals.calories} / {profile.targetCalories} kcal</Badge>
-            </div>
-            <div className="grid grid-cols-4 gap-1">
-              <RingStat label="kcal" value={totals.calories} target={profile.targetCalories} color="hsl(var(--primary))" warnOver />
-              <RingStat label="Prot." value={totals.protein} target={profile.targetProtein} color="hsl(var(--protein))" />
-              <RingStat label="Gluc." value={totals.carbs} target={profile.targetCarbs} color="hsl(var(--carbs))" warnOver />
-              <RingStat label="Lip." value={totals.fats} target={profile.targetFats} color="hsl(var(--fats))" />
-            </div>
-            <div className="mt-3 flex items-center justify-center gap-4 text-xs font-medium text-primary">
-              <span className="inline-flex items-center gap-1"><Plus className="h-4 w-4" /> Ajouter un repas</span>
-              <span className="inline-flex items-center gap-1"><Camera className="h-4 w-4" /> Photo</span>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
+      <WeightHeroCard current={current} targetWeight={profile.targetWeight} goalPct={goalPct} toGo={toGo} />
+
+      <NutritionCard
+        totals={totals}
+        targets={{ calories: profile.targetCalories, protein: profile.targetProtein, carbs: profile.targetCarbs, fats: profile.targetFats }}
+      />
 
       {/* One-tap meals from the program */}
       {quickFavs.length > 0 && (
@@ -227,15 +204,6 @@ export default async function DashboardPage() {
           <p>Mal dormi ? Dis-le au coach — un sommeil &lt; 7h freine la perte de poids.</p>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function RingStat({ label, value, target, color, warnOver }: { label: string; value: number; target: number; color: string; warnOver?: boolean }) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <ProgressRing value={value} max={target} size={66} stroke={7} color={color} warnOver={warnOver} label={String(value)} />
-      <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
     </div>
   );
 }
