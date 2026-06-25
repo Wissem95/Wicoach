@@ -13,6 +13,7 @@ interface Config {
   baseURL: string; // e.g. https://api.groq.com/openai/v1
   apiKey: string;
   model: string;
+  visionModel?: string; // used by analyzeImage if the chat model isn't multimodal
   extraHeaders?: Record<string, string>;
 }
 
@@ -93,9 +94,8 @@ export class OpenAICompatibleProvider implements LLMProvider {
       method: "POST",
       headers: this.headers(),
       body: JSON.stringify({
-        model: this.cfg.model,
+        model: this.cfg.visionModel || this.cfg.model,
         temperature: 0.2,
-        response_format: { type: "json_object" },
         messages: [
           {
             role: "user",

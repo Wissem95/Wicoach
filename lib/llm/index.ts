@@ -7,12 +7,14 @@ import type { PhotoAnalysis } from "@/types";
 export type { LLMProvider } from "./types";
 
 // --- Provider construction from env --------------------------------------
-function groq(model?: string): LLMProvider {
+function groq(): LLMProvider {
   return new OpenAICompatibleProvider({
     name: "Groq",
     baseURL: "https://api.groq.com/openai/v1",
     apiKey: process.env.GROQ_API_KEY!,
-    model: model || process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+    model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+    // Groq multimodal model (Llama 4 Scout) used for photo analysis.
+    visionModel: process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
   });
 }
 
@@ -40,9 +42,10 @@ function chatChain(): LLMProvider[] {
   return chain;
 }
 
-// Vision chain (Gemini first — best free vision).
+// Vision chain (Groq multimodal first to spare the Gemini quota, Gemini as fallback).
 function visionChain(): LLMProvider[] {
   const chain: LLMProvider[] = [];
+  if (process.env.GROQ_API_KEY) chain.push(groq());
   if (process.env.GEMINI_API_KEY) chain.push(new GeminiProvider());
   if (process.env.OPENROUTER_API_KEY)
     chain.push(openrouter(process.env.OPENROUTER_VISION_MODEL || "google/gemini-2.0-flash-exp:free"));
