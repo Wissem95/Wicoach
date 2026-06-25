@@ -50,11 +50,30 @@ function visionChain(): LLMProvider[] {
   return chain;
 }
 
+const TRANSIENT = /(\b429\b|\b503\b|\b500\b|UNAVAILABLE|overloaded|high demand|rate.?limit|temporarily|timeout)/i;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Retry a call a few times on transient errors (overload / rate-limit) with backoff.
+async function attempt<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (i < retries && TRANSIENT.test(msg)) {
+        await sleep(500 * 2 ** i);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 async function withFallback<T>(chain: LLMProvider[], fn: (p: LLMProvider) => Promise<T>): Promise<T> {
   let lastErr: unknown;
   for (const p of chain) {
     try {
-      return await fn(p);
+      return await attempt(() => fn(p));
     } catch (err) {
       lastErr = err;
       console.error("[llm] provider failed, trying next:", err instanceof Error ? err.message : err);
